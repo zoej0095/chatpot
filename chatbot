@@ -1,0 +1,27 @@
+import requests
+
+# set API parameters
+api_key = "523bd8d62362482880ba2f161fa32e26"
+season = "2021"
+
+# define target games
+target_games = [5, 10, 20, None]
+
+# get player stats from API
+url = f"https://api.sportsdata.io/v3/nba/stats/json/PlayerSeasonStats/{season}?key={api_key}"
+response = requests.get(url)
+player_stats = response.json()
+
+# process player stats for each target game
+for i, n in enumerate(target_games):
+    print(f"\nProcessing stats for last {n or 'all'} games:")
+    for player in player_stats:
+        if "GamesPlayed" not in player:
+            continue
+        if n is None or player["GamesPlayed"] >= n:
+            stats = player[f"Last{n}Games"]
+            if not stats:
+                continue
+            proj_pct = sum(1 for s in stats if s.get("ProjectedPoints") is not None and s["ProjectedPoints"] <= s["Points"]) / len(stats)
+            if proj_pct >= 0.7:
+                print(f"{player['Name']} ({player['Team']}) - projection hit rate: {proj_pct:.2%}")
